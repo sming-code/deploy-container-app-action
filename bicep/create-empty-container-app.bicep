@@ -3,6 +3,7 @@ param app_insights_name string
 param container_app_name string
 param environment string
 param environment_resource_group_name string
+param sql_server_name string
 
 var environmentKeyVaultName string = 'kv-${environment}-tag'
 var environmentAppConfigurationName string = 'app-config-${environment}-tag'
@@ -107,6 +108,14 @@ module keyvaultAppPolicyAssignment 'keyvault-secrets-user-role-assignment.bicep'
 module appConfigurationPolicyAssignment 'app-configuration-user-role-assignment.bicep' = {
   params: {
     appConfigStoreName: environmentAppConfigurationName
+    principalId: container_app.identity.principalId
+  }
+  scope: resourceGroup(environment_resource_group_name)
+}
+
+module sqlServerContributorPolicyAssignment 'sql-db-contributor-role-assignment.bicep' = {
+  params: {
+    serverName: sql_server_name
     principalId: container_app.identity.principalId
   }
   scope: resourceGroup(environment_resource_group_name)
