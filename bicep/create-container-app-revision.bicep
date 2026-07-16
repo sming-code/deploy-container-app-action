@@ -29,6 +29,17 @@ resource appConfig 'Microsoft.AppConfiguration/configurationStores@2024-06-01' e
   scope: resourceGroup(environment_resource_group_name)
 }
 
+resource existing_container_app 'Microsoft.App/containerApps@2026-01-01' existing = {
+  name: container_app_name
+}
+
+var currentRevisionSuffix = split(existing_container_app.properties.latestRevisionName, '--')[1]
+var newRevisionSuffixNo = startsWith(currentRevisionSuffix, 'v${revisionNo}')
+  ? contains(currentRevisionSuffix, '-')
+    ? format('{0}-{1}', revisionNo, int(split(currentRevisionSuffix, '-')[1]) + 1)
+    : '${revisionNo}-0'
+  : revisionNo
+
 resource container_app 'Microsoft.App/containerapps@2026-01-01' = {
   name: container_app_name
   location: 'UK South'
@@ -113,7 +124,7 @@ resource container_app 'Microsoft.App/containerapps@2026-01-01' = {
           ]
         }
       ]
-      revisionSuffix: 'v${revisionNo}'
+      revisionSuffix: 'v${newRevisionSuffixNo}'
       scale: {
         minReplicas: min_replicas
         maxReplicas: max_replicas
