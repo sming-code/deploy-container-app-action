@@ -31,7 +31,7 @@ runs:
       echo "principal-id=$principalId" >> $GITHUB_OUTPUT
 
   - name: ensure-container-app-sql-server-access
-    if: ${{ env.sql-database-exists == 0 }}
+    if: ${{ env.container-app-exists == 0 }}
     uses: azure/sql-action@v2.3
     with:
       connection-string: "Server=tcp:${{ env.sql-server-name }}.database.windows.net,1433;Initial Catalog=${{ env.sql-database-name }};Authentication=Active Directory Default;Encrypt=True;"
