@@ -11,6 +11,7 @@ param environment_resource_group_name string
 param memory string
 param min_replicas int
 param max_replicas int
+param latest_revision_no string
 var revisionNo = replace(container_app_image_tag, '.', '')
 
 @secure()
@@ -29,14 +30,9 @@ resource appConfig 'Microsoft.AppConfiguration/configurationStores@2024-06-01' e
   scope: resourceGroup(environment_resource_group_name)
 }
 
-resource existing_container_app 'Microsoft.App/containerApps@2026-01-01' existing = {
-  name: container_app_name
-}
-
-var currentRevisionSuffix = split(existing_container_app.properties.latestRevisionName, '--')[1]
-var newRevisionSuffixNo = startsWith(currentRevisionSuffix, 'v${revisionNo}')
-  ? contains(currentRevisionSuffix, '-')
-    ? format('{0}-{1}', revisionNo, int(split(currentRevisionSuffix, '-')[1]) + 1)
+var newRevisionSuffixNo = startsWith(latest_revision_no, 'v${revisionNo}')
+  ? contains(latest_revision_no, '-')
+    ? format('{0}-{1}', revisionNo, int(split(latest_revision_no, '-')[1]) + 1)
     : '${revisionNo}-0'
   : revisionNo
 
