@@ -9,15 +9,18 @@ runs:
     shell: bash
     run: |
       caeId="$(az containerapp env list -g ${{ env.environment-resource-group-name }} --query '[?name==`'${{ env.container-app-environment-name }}'`].id | [0]')"
+      bicepFileNameIngressChunk="$([[ ${{ env.service-type }} == 'Api' && echo '' || echo 'no-ingress-' ]])"
       echo "$caeId"
+      echo "$bicepFileNameIngressChunk"
       echo "cae-id=$caeId" >> $GITHUB_OUTPUT
+      echo "bicep-file-name-ingress-chunk=$bicepFileNameIngressChunk" >> $GITHUB_OUTPUT
 
   - name: ensure-container-app-exists
     if: ${{ env.container-app-exists == 0 }}
     uses: azure/arm-deploy@v2
     with:
       resourceGroupName: ${{ env.resource-group-name }}
-      template: ${{ github.action_path }}/bicep/create-empty-container-app.bicep
+      template: ${{ github.action_path }}/bicep/create-empty-container-${{ steps.container-app-required-variables.outputs.bicep-file-name-ingress-chunk }}app.bicep
       deploymentName: 'create-${{ env.container-app-name }}'
       scope: resourcegroup
       parameters: app_config_name="app-config-${{ env.environment-name }}-tag" app_insights_name=${{ env.app-insights-name }} container_app_name=${{ env.container-app-name }} environment=${{ env.environment-name }} environment_resource_group_name=${{ env.environment-resource-group-name }} sql_server_name=${{ env.sql-server-name }} container_app_environment_id=${{ steps.container-app-required-variables.outputs.cae-id }} ghcr_username="${{ env.ghcr-username }}" ghcr_token=${{ env.ghcr-token }}
@@ -43,7 +46,7 @@ runs:
     uses: azure/arm-deploy@v2
     with:
       resourceGroupName: ${{ env.resource-group-name }}
-      template: ${{ github.action_path }}/bicep/create-container-app-revision.bicep
+      template: ${{ github.action_path }}/bicep/create-container-app-${{ steps.container-app-required-variables.outputs.bicep-file-name-ingress-chunk }}revision.bicep
       deploymentName: 'deploy-${{ env.container-app-name }}-revision-${{ env.revision-suffix }}'
       scope: resourcegroup
       parameters: app_config_name="app-config-${{ env.environment-name }}-tag" app_insights_name=${{ env.app-insights-name }} container_app_name=${{ env.container-app-name }} container_app_image_name=${{ env.container-app-image }} container_app_image_tag=${{ env.version-no }} cpu=0.5 environment_resource_group_name=${{ env.environment-resource-group-name }} memory=1Gi min_replicas=1 max_replicas=1 database_connection_string="Server=tcp:${{ env.sql-server-name }}.database.windows.net,1433;Authentication=\"Active Directory Managed Identity\";Encrypt=True;Database=${{ env.sql-database-name }}" container_app_environment_id=${{ steps.container-app-required-variables.outputs.cae-id }} ghcr_username="${{ env.ghcr-username }}" ghcr_token=${{ env.ghcr-token }} service_name="${{ env.service-name }}" environment_name=${{ env.environment-name }} latest_revision_no=${{ steps.container-app-principal-id.outputs.latest-revision-no }}
