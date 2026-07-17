@@ -9,7 +9,7 @@ runs:
     shell: bash
     run: |
       caeId="$(az containerapp env list -g ${{ env.environment-resource-group-name }} --query '[?name==`'${{ env.container-app-environment-name }}'`].id | [0]')"
-      bicepFileNameIngressChunk="$([[ ${{ env.service-type }} == 'Api' && echo '' || echo 'no-ingress-' ]])"
+      bicepFileNameIngressChunk="$([[ ${{ env.service-type }} == 'Api' ]] && echo '' || echo 'no-ingress-')"
       echo "$caeId"
       echo "$bicepFileNameIngressChunk"
       echo "cae-id=$caeId" >> $GITHUB_OUTPUT
